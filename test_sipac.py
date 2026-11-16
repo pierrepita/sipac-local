@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from lxml import html
+from cae import build_control, control_tsv, render_control
 
 from sipac import (BASE, Client, Response, SipacError, checked_url, download_document,
                    fields, normalize_number, parse_documents, render_report, require_content, safe_fragment)
@@ -28,9 +29,31 @@ def document():
 class DownloaderTests(unittest.TestCase):
     def test_complete_nup(self):
         self.assertEqual(normalize_number("23066026112202679"), "23066.026112/2026-79")
+        self.assertEqual(normalize_number(" 006904/23-84 "), "23066.006904/2023-84")
+        self.assertEqual(normalize_number("23066.006904/2023-84"), "23066.006904/2023-84")
         for invalid in ("../teste", "23066.026112/2026", "026112", "", "<script>"):
             with self.assertRaises(SipacError):
                 normalize_number(invalid)
+
+    def test_cae_control_and_receipt(self):
+        record = {"processo": "23066.006904/2023-84", "cabecalho": {"Unidade de Origem": "DEPARTAMENTO DE CIRURGIA/FMB (12.01.21.22)", "Assunto Detalhado": "Proposta de Criação do Programa de Residência Médica em Cirurgia Cardiovascular", "Data de Autuação": "07/02/2023 11:20"}, "movimentacoes": {"colunas": ["Unidade Origem", "Unidade Destino", "Recebido Em"], "linhas": [["PROPG", "CONSELHO ACADÊMICO DE ENSINO /UFBA", "23/02/2026 11:33"], ["CAE", "CARE", "20/10/2026"], ["X", "CGAE", "15/11/2026"]]}}
+        c = build_control(record)
+        self.assertEqual(len(c["colunas"]), 17)
+        self.assertEqual(c["valores"], ["006904/23-84", "PÓS", "FMB - Faculdade de Medicina", record["cabecalho"]["Assunto Detalhado"], "A definir", "Criação de curso", "30", "07/02/2023", "23/02/2026", "A definir", "A definir", "A definir", "A definir", "Em análise", "A definir", "A definir", "A definir"])
+        self.assertEqual(len(control_tsv(c).split("\t")), 17)
+        self.assertEqual(len(control_tsv(c, header=True).split("\r\n")), 2)
+        self.assertIn("data-cae-copy", render_control(c))
+
+    def test_cae_unknown_dates_and_tsv_safety(self):
+        record = {"processo": "23066.006904/2023-84", "cabecalho": {"Data de Autuação": "31/02/2023"}, "movimentacoes": {"colunas": ["Destino", "Recebido Em"], "linhas": [["CAE", "31/02/2026"], ["CAE", "15/01/2025"], ["CAE", "23/02/2026"]]}}
+        c = build_control(record)
+        self.assertEqual(c["valores"][1], "A definir")
+        self.assertEqual(c["valores"][7], "A definir")
+        self.assertEqual(c["valores"][8], "23/02/2026")
+        c["valores"][3] = "=FORMULA()\tsegunda\nlinha"
+        self.assertIn("'=FORMULA() segunda linha", control_tsv(c))
+        self.assertEqual(len(control_tsv(c).split("\t")), 17)
+        self.assertNotIn("\n", control_tsv(c))
 
     def test_scope_and_redirects(self):
         self.assertEqual(checked_url("/public/documento"), BASE + "/public/documento")
@@ -122,6 +145,35 @@ class DownloaderTests(unittest.TestCase):
             self.assertEqual(links, ["documentos/001_original.pdf"])
             self.assertTrue(all((root / link).is_file() for link in links))
             self.assertEqual(json.loads((root / "processo.json").read_text())["processo"], record["processo"])
+            control = (root / "controle-cae.tsv").read_text(encoding="utf-8-sig").splitlines()
+            self.assertEqual(len(control), 2)
+            self.assertEqual(len(control[1].split("\t")), 17)
+            self.assertEqual(len(page.xpath("//input[@data-cae-value]")), 17)
+            self.assertTrue((root / "controle-cae.js").is_file())
+
+    def test_local_api_normalizes_short_number(self):
+        import threading
+        from http.server import ThreadingHTTPServer
+        from urllib.request import Request, urlopen
+        from app import State, make_handler
+        state = State()
+        with ThreadingHTTPServer(("127.0.0.1", 0), make_handler(state)) as server:
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            try:
+                base = f"http://127.0.0.1:{server.server_port}"
+                with patch.object(state, "run"):
+                    body = json.dumps({"processo": "006904/23-84", "destino": tempfile.gettempdir()}).encode()
+                    req = Request(base + "/api/consultar", data=body, headers={"X-Local-Token": state.token, "Content-Type": "application/json"})
+                    with urlopen(req) as result:
+                        self.assertEqual(result.status, 202)
+                    # Handler starts the worker before returning HTTP 202.
+                    self.assertEqual(state.snapshot()["processo"], "23066.006904/2023-84")
+                with urlopen(base + "/controle-cae.js") as script:
+                    self.assertIn(b"installCaeControls", script.read())
+            finally:
+                server.shutdown()
+                thread.join()
 
 
 if __name__ == "__main__":
