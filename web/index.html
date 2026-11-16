@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="local-token" content="__LOCAL_TOKEN__">
-  <title>SIPAC Local · UFBA</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script>
+  <title>SIPAC Local · UFBA</title><link rel="stylesheet" href="/style.css"><script src="/controle-cae.js" defer></script><script src="/app.js" defer></script>
 </head>
 <body>
   <header><div class="brand"><span class="symbol">S</span><b>SIPAC <span>Local</span></b></div><span class="local"><i></i> Rodando no seu computador</span></header>
@@ -13,8 +13,8 @@
       <section class="card"><div class="card-top"><span class="step">01</span><h2>Consultar e salvar</h2></div>
         <form id="form">
           <label for="processo">Número do processo</label>
-          <input id="processo" name="processo" placeholder="23066.026112/2026-79" required autocomplete="off" spellcheck="false">
-          <p class="hint">Informe o número completo, com ou sem pontuação.</p>
+          <input id="processo" name="processo" placeholder="23066.006904/2023-84 ou 006904/23-84" required autocomplete="off" spellcheck="false">
+          <p class="hint">Aceita o número completo ou a forma curta da UFBA: 006904/23-84.</p>
           <label for="destino">Salvar os processos em</label>
           <div class="folder-row"><input id="destino" name="destino" required spellcheck="false"><button type="button" id="escolher" class="secondary">Escolher pasta</button></div>
           <p class="hint">Cada consulta cria uma nova subpasta, sem substituir as anteriores.</p>
@@ -32,7 +32,7 @@
     <section id="andamento" class="card progress-card" hidden aria-live="polite">
       <div class="progress-heading"><div><div class="eyebrow">ANDAMENTO DA CONSULTA</div><h2 id="mensagem">Iniciando…</h2></div><span id="contador" class="count"></span></div>
       <progress id="progresso" max="100" value="0"></progress>
-      <div id="resultado" hidden><div class="metrics"><span><b id="salvos">0</b> documentos salvos</span><span><b id="arquivos">0</b> arquivos de conteúdo</span><span><b id="pendencias">0</b> pendências</span></div><p id="pasta-final"></p><a id="abrir-indice" class="primary link-button" href="#" target="_blank" rel="noopener">Abrir índice do processo ↗</a></div>
+      <div id="resultado" hidden><div class="metrics"><span><b id="salvos">0</b> documentos salvos</span><span><b id="arquivos">0</b> arquivos de conteúdo</span><span><b id="pendencias">0</b> pendências</span></div><p id="pasta-final"></p><a id="abrir-indice" class="primary link-button" href="#" target="_blank" rel="noopener">Abrir índice do processo ↗</a><div id="controle-cae-container"></div></div>
       <details><summary>Ver detalhes</summary><ol id="eventos"></ol></details>
     </section>
     <footer>SIPAC Local · Ferramenta independente para consulta ao portal público da UFBA.<br>Os arquivos são gravados no computador em que o Python está executando.</footer>
