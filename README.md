@@ -4,6 +4,30 @@ Consulte um processo pelo número e salve os documentos públicos do **SIPAC da 
 
 A aplicação é feita em Python e abre uma interface no navegador. O processamento e a gravação dos arquivos acontecem no computador em que você executa o programa.
 
+## Número do processo e planilha de controle CAE
+
+Aceita **23066.006904/2023-84**, **006904/23-84** ou os 17 dígitos do NUP. Na forma curta, o prefixo é **23066 (UFBA)** e o ano é **20xx**; para outro século ou prefixo, use o número completo. Zeros à esquerda são preservados.
+
+Após a consulta, use **Copiar linha para planilha**. O texto tem uma única linha separada por tabulações, sem cabeçalho: cole na coluna **Processo** de uma linha vazia no Excel, LibreOffice ou Google Sheets. **Revisar os 17 campos** permite alterar os valores antes de copiar; **Copiar cabeçalhos** fornece a ordem das colunas.
+
+A ordem é: Processo, Nível, Unidade de Origem, Título, Relator, Tipo, Sugestão de prazo, Data Abertura, Data Recebimento, Data Distribuição, Data Parecer, Dias até Parecer, Data Apreciação, Situação, Parecer, Final e OBS.
+
+O preenchimento inicial utiliza:
+
+- **Processo:** forma reduzida da UFBA quando o ano é 20xx; mantém a forma completa em outros casos.
+- **Título e Unidade de Origem:** cabeçalho do SIPAC. Unidades identificadas como FMB são agrupadas como **FMB - Faculdade de Medicina**. O título reproduz o assunto cadastrado e pode ser resumido manualmente.
+- **Nível e Tipo:** sugestões conservadoras por palavras do assunto. Nível: PÓS quando há indicação de pós-graduação, residência, especialização, mestrado ou doutorado; GRAD quando há graduação sem indicação de pós. Tipo: Criação de curso ou Alteração curricular quando explícitos; nos demais casos, A definir. Revise essas sugestões.
+- **Data Abertura:** data de abertura/autuação, com cadastro como alternativa. Horários são removidos.
+- **Data Recebimento:** recebimento válido mais recente em uma movimentação cujo **destino é o CAE**. Não usa a data de envio nem uma saída do CAE. Sem evidência, A definir.
+- **Sugestão de prazo:** 30 dias, valor inicial editável, sem atribuir esse prazo a uma norma.
+- **Situação:** Em análise como estado inicial da planilha, sem reproduzir ou inferir a situação atual no CAE.
+- **Demais campos e dados ausentes:** A definir. Não inventa relator, datas de distribuição/parecer/apreciação, resultado, decisão final ou observações; não calcula Dias até Parecer.
+
+A seção **Como os campos foram preenchidos** mostra as fontes e as sugestões. A revisão vale para a linha copiada na página. A pasta/ZIP também inclui **controle-cae.tsv** (cabeçalho e linha inicial) e **controle-cae.js** (botões do índice offline). O TSV permanece com o preenchimento inicial.
+
+Se a cópia automática for bloqueada pelo navegador, aparece uma caixa com o texto selecionado para copiar manualmente. As tabulações e quebras de linha dentro de campos são substituídas por espaços; valores que poderiam ser interpretados como fórmulas são protegidos.
+
+
 ## Funcionalidades
 
 - Consulta pelo número completo do processo.
