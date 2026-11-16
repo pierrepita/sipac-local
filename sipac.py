@@ -25,6 +25,7 @@ from urllib.request import HTTPCookieProcessor, HTTPRedirectHandler, Request, bu
 from zoneinfo import ZoneInfo
 
 from lxml import etree, html
+from cae import build_control, control_tsv, render_control
 
 BASE = "https://sipac.ufba.br"
 PORTAL = BASE + "/public/jsp/portal.jsf"
@@ -46,11 +47,13 @@ def fold(value):
 
 def normalize_number(value):
     value = value.strip()
-    # Aceita NUP formatado ou seus 17 dígitos, sem completar dígitos omitidos.
+    short = re.fullmatch(r"(\d{6})/(\d{2})-(\d{2})", value)
+    if short:
+        value = f"23066.{short[1]}/20{short[2]}-{short[3]}"
     if re.fullmatch(r"\d{17}", value):
         value = f"{value[:5]}.{value[5:11]}/{value[11:15]}-{value[15:]}"
     if not re.fullmatch(r"\d{5}\.\d{6}/\d{4}-\d{2}", value):
-        raise SipacError("Informe o número completo, por exemplo 23066.026112/2026-79.")
+        raise SipacError("Informe 23066.006904/2023-84 ou 006904/23-84.")
     return value
 
 
@@ -439,6 +442,7 @@ def download_document(doc, folder, timeout=45):
 
 
 def render_report(record, folder):
+    record["controle_cae"] = build_control(record)
     docs = record["documentos"]
     complete = sum(d["status"] == "baixado" for d in docs)
     warnings = record["avisos"] + [f"Documento {d['ordem']}: {w}" for d in docs for w in d["avisos"]]
@@ -449,6 +453,7 @@ def render_report(record, folder):
     body += f'<p class="muted">Consulta em {escape(record["consultado_em"])} • <a href="{escape(record["fonte"], quote=True)}">Consultar no SIPAC</a></p>'
     body += f'<div class="note"><b>{complete} de {len(docs)} documentos listados com todas as versões acessíveis salvas.</b><br>Escopo: consulta pública. Documentos ocultos ou restritos não são recuperados por esta versão. Anexos originais e versões com assinaturas estão identificados separadamente.</div>'
     body += '<h2>Cabeçalho do processo</h2>' + field_table(record["cabecalho"])
+    body += render_control(record["controle_cae"])
     for title, data in (("Interessados", record["interessados"]),):
         if data["linhas"]:
             body += f"<h2>{title}</h2>" + render_grid(data)
@@ -473,7 +478,10 @@ def render_report(record, folder):
     if warnings:
         body += '<h2>Pendências e observações</h2><ul>' + ''.join(f'<li>{escape(x)}</li>' for x in warnings) + '</ul>'
     body += '<footer>Mantenha este índice e a pasta documentos juntos para preservar os links. Os PDFs recebidos do SIPAC foram salvos sem alteração. Documentos eletrônicos apresentados em HTML têm uma cópia local passiva do conteúdo.</footer>'
-    atomic_write(folder / "indice.html", html_page("Processo " + record["processo"], body))
+    output = html_page("Processo " + record["processo"], body).replace('</body>', '<script src="controle-cae.js" defer></script></body>')
+    atomic_write(folder / "indice.html", output)
+    atomic_write(folder / "controle-cae.js", (Path(__file__).parent / "web" / "controle-cae.js").read_bytes())
+    atomic_write(folder / "controle-cae.tsv", "\ufeff" + control_tsv(record["controle_cae"], header=True) + "\r\n")
     atomic_write(folder / "processo.json", json.dumps(record, ensure_ascii=False, indent=2))
     with (folder / "documentos.csv").open("w", encoding="utf-8-sig", newline="") as out:
         writer = csv.writer(out, delimiter=";")
@@ -526,7 +534,7 @@ def export_process(number, destination, progress=None, workers=3, timeout=45):
     folder = destination / (slug(number) + "_" + stamp)
     folder.mkdir(exist_ok=False)
     (folder / "documentos").mkdir()
-    record = {"versao": "1.0", "processo": number, "consultado_em": now.isoformat(timespec="seconds"),
+    record = {"versao": "1.1", "processo": number, "consultado_em": now.isoformat(timespec="seconds"),
               "fonte": response.url, "escopo": "consulta_publica", "cabecalho": header,
               "interessados": tabular(root, "Interessados Deste Processo"),
               "movimentacoes": tabular(root, "Movimentações do Processo"), "avisos": [], "documentos": [],
