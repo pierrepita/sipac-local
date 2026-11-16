@@ -35,6 +35,12 @@ function draw(state) {
     $("pendencias").textContent = state.pendencias;
     $("pasta-final").textContent = `Pasta: ${state.pasta}`;
     $("abrir-indice").href = state.indice;
+    const control = $("controle-cae-container");
+    if (control.dataset.export !== state.pasta) {
+      control.innerHTML = state.controle_cae_html || "";
+      control.dataset.export = state.pasta;
+      installCaeControls(control);
+    }
   }
   busy(state.status === "executando");
 }
