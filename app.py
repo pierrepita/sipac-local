@@ -15,6 +15,7 @@ from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
 from sipac import SipacError, export_process, normalize_number
+from cae import render_control
 
 HERE = Path(__file__).resolve().parent
 
@@ -44,6 +45,7 @@ class State:
                 self.folder = folder
                 self.data.update(status="concluido", pasta=str(folder), salvos=record["total_salvo"],
                                  arquivos=record["total_arquivos"], pendencias=record["pendencias"],
+                                 controle_cae_html=render_control(record["controle_cae"]),
                                  indice="/acervo/indice.html", mensagem="Consulta concluída. Os arquivos estão no seu computador.")
         except Exception as exc:
             print(f"Falha: {exc}", file=sys.stderr, flush=True)
@@ -88,7 +90,7 @@ def make_handler(state):
             if path == "/":
                 content = (HERE / "web" / "index.html").read_text(encoding="utf-8").replace("__LOCAL_TOKEN__", state.token)
                 return self.reply(content, "text/html; charset=utf-8")
-            if path in ("/app.js", "/style.css"):
+            if path in ("/app.js", "/style.css", "/controle-cae.js"):
                 file = HERE / "web" / path[1:]
                 return self.reply(file.read_bytes(), "text/javascript; charset=utf-8" if path.endswith(".js") else "text/css; charset=utf-8")
             if path == "/api/estado":
