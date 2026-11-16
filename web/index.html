@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="local-token" content="__LOCAL_TOKEN__">
+  <title>SIPAC Local · UFBA</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script>
+</head>
+<body>
+  <header><div class="brand"><span class="symbol">S</span><b>SIPAC <span>Local</span></b></div><span class="local"><i></i> Rodando no seu computador</span></header>
+  <main>
+    <section class="intro"><div class="eyebrow">CONSULTA PÚBLICA · UFBA</div><h1>O processo inteiro,<br>organizado na sua pasta.</h1><p>Consulte pelo número, salve os documentos e abra tudo<br class="wide"> por um índice com links locais.</p></section>
+    <div class="layout">
+      <section class="card"><div class="card-top"><span class="step">01</span><h2>Consultar e salvar</h2></div>
+        <form id="form">
+          <label for="processo">Número do processo</label>
+          <input id="processo" name="processo" placeholder="23066.026112/2026-79" required autocomplete="off" spellcheck="false">
+          <p class="hint">Informe o número completo, com ou sem pontuação.</p>
+          <label for="destino">Salvar os processos em</label>
+          <div class="folder-row"><input id="destino" name="destino" required spellcheck="false"><button type="button" id="escolher" class="secondary">Escolher pasta</button></div>
+          <p class="hint">Cada consulta cria uma nova subpasta, sem substituir as anteriores.</p>
+          <button id="iniciar" class="primary" type="submit">Consultar e baixar <span aria-hidden="true">↓</span></button>
+        </form>
+        <div class="scope"><span class="scope-icon">i</span><p>Esta versão acessa a consulta pública. Itens restritos ou indisponíveis aparecem como pendências quando listados pelo SIPAC.</p></div>
+      </section>
+      <aside class="card contents"><div class="card-top"><span class="step">02</span><h2>O que fica salvo</h2></div>
+        <div class="item"><span class="file-icon">↗</span><div><b>Índice do processo</b><p>Cabeçalho, descrições e links para abrir cada documento.</p></div></div>
+        <div class="item"><span class="file-icon">▤</span><div><b>Documentos e despachos</b><p>Anexos originais, versões com assinaturas e cópias HTML dos despachos.</p></div></div>
+        <div class="item"><span class="file-icon">✓</span><div><b>Histórico e conferência</b><p>Movimentações, relação de arquivos e registro de pendências.</p></div></div>
+        <p class="offline">Abra o índice mesmo sem internet.<br>Mantenha os arquivos na mesma pasta.</p>
+      </aside>
+    </div>
+    <section id="andamento" class="card progress-card" hidden aria-live="polite">
+      <div class="progress-heading"><div><div class="eyebrow">ANDAMENTO DA CONSULTA</div><h2 id="mensagem">Iniciando…</h2></div><span id="contador" class="count"></span></div>
+      <progress id="progresso" max="100" value="0"></progress>
+      <div id="resultado" hidden><div class="metrics"><span><b id="salvos">0</b> documentos salvos</span><span><b id="arquivos">0</b> arquivos de conteúdo</span><span><b id="pendencias">0</b> pendências</span></div><p id="pasta-final"></p><a id="abrir-indice" class="primary link-button" href="#" target="_blank" rel="noopener">Abrir índice do processo ↗</a></div>
+      <details><summary>Ver detalhes</summary><ol id="eventos"></ol></details>
+    </section>
+    <footer>SIPAC Local · Ferramenta independente para consulta ao portal público da UFBA.<br>Os arquivos são gravados no computador em que o Python está executando.</footer>
+  </main>
+</body></html>
